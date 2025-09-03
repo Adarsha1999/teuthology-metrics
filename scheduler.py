@@ -1,3 +1,4 @@
+import logging
 import signal
 import sys
 from datetime import datetime, timezone
@@ -27,6 +28,8 @@ SUITES = [
     "powercycle",
 ]
 
+LOG = logging.getLogger("teuthology-metrics")
+
 
 def run_task():
     """Run teuthology testrun process"""
@@ -36,7 +39,7 @@ def run_task():
     # Execute run method
     try:
         for suite in SUITES:
-            print(f"[JOB START] suite={suite} | date={now}")
+            LOG.debug(f"[JOB START] suite={suite} | date={now}")
 
             # Set paddle variables
             segments = ["suite", suite, "user", USER, "date", now]
@@ -48,20 +51,20 @@ def run_task():
                 segments=segments,
             )
     except Exception as exc:
-        print(f"[JOB ERROR] {exc}")
+        LOG.error(f"[JOB ERROR] {exc}")
     finally:
-        print("[JOB END]")
+        LOG.debug("[JOB END]")
 
 
 def create_shutdown_handler(scheduler):
     """Create shutdown handler"""
 
     def shutdown(signum, frame):
-        print(f"Received signal {signum}. Shutting down scheduler...")
+        LOG.debug(f"Received signal {signum}. Shutting down scheduler...")
         try:
             scheduler.shutdown(wait=True)
         except Exception:
-            print("Error during scheduler shutdown")
+            LOG.error("Error during scheduler shutdown")
         finally:
             sys.exit(0)
 
@@ -90,7 +93,7 @@ def main():
 
     # Start scheduler
     scheduler.start()
-    print(f"Scheduler started for TZ={TIMEZONE}")
+    LOG.debug(f"Scheduler started for TZ={TIMEZONE}")
 
     # Exit code
     shutdown_handler = create_shutdown_handler(scheduler)
